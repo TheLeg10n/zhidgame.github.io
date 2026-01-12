@@ -1,0 +1,74 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #333;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 60vh;
+  background: #e0f0e0; /* Цвет фона экрана игры */
+  border: 5px solid #555;
+  overflow: hidden;
+}
+
+#wolf {
+  position: absolute;
+  width: 100px; /* Размер волка */
+  bottom: 10%;  /* Фиксируем по вертикали */
+  left: 50%;    /* Начальная позиция */
+  transform: translateX(-50%); /* Центрирование */
+  transition: left 0.3s ease-out; /* ПЛАВНОСТЬ ТУТ */
+  z-index: 10;
+}
+
+/* Зоны для нажатия на телефоне (невидимые) */
+.touch-zones {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  z-index: 20;
+}
+
+.zone {
+  flex: 1;
+  height: 100%;
+  /* background: rgba(255,0,0,0.1); // Раскомментируй, чтобы увидеть зоны */
+}
+
+.egg {
+  position: absolute;
+  width: 30px;
+}
+
+#score, #missed {
+  position: absolute;
+  padding: 10px;
+  font-weight: bold;
+}
+#missed { right: 0; color: red; }
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+.control-group {
+  display: flex;
+  gap: 50px;
+}
+button {
+  width: 70px;
+  height: 70px;
+  font-size: 24px;
+  border-radius: 50%;
+}

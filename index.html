@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Жид лове белку</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent: #f43f5e;
+            --bg-gradient: linear-gradient(135deg, #1e1e2e 0%, #11111b 100%);
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg-gradient);
+            font-family: 'Segoe UI', sans-serif;
+            touch-action: none;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: white;
+        }
+
+        /* Меню запуска */
+        #menu {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(17, 17, 27, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(15px);
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .start-btn:active { transform: scale(0.9); }
+
+        /* Игровое поле */
+        #game-container {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px 24px 0 0;
+            overflow: hidden;
+        }
+
+        #ui {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            background: var(--glass);
+        }
+
+        /* Уменьшенный волк */
+        #wolf {
+            position: absolute;
+            width: 70px; /* Было 85px - уменьшено */
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .egg {
+            position: absolute;
+            width: 30px; /* Яйца тоже чуть меньше для баланса */
+            z-index: 5;
+        }
+
+        /* Уменьшенные кнопки управления */
+        .controls {
+            height: 120px; /* Было 180px - уменьшено */
+            display: flex;
+            gap: 20px;
+            padding: 15px 30px;
+            background: #11111b;
+            justify-content: center;
+        }
+
+        .btn {
+            width: 80px; /* Фиксированная ширина для компактности */
+            height: 80px;
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%; /* Круглые кнопки */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn:active {
+            background: var(--primary);
+            transform: scale(0.9);
+        }
+
+        #score { color: var(--primary); font-size: 28px; font-weight: 800; }
+    </style>
+</head>
+
+<body>
+
+<div id="menu">
+    <h1 style="margin-bottom: 30px; letter-spacing: 2px;">Жид лове белку</h1>
+    <button class="start-btn" onclick="startGame()">Играть</button>
+    <p style="margin-top: 20px; opacity: 0.5; font-size: 12px;">Кнопки внизу</p>
+</div>
+
+<div id="ui">
+    <div>Score: <span id="score">0</span></div>
+    <div style="opacity: 0.6">Best: <span id="best">0</span></div>
+</div>
+
+<div id="game-container">
+    <img src="wolf.png" id="wolf" alt="Волк">
+</div>
+
+<div class="controls">
+    <div class="btn" id="left-btn">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </div>
+    <div class="btn" id="right-btn">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </div>
+</div>
+
+<script>
+    const wolf = document.getElementById('wolf');
+    const container = document.getElementById('game-container');
+    const scoreElement = document.getElementById('score');
+    const menu = document.getElementById('menu');
+
+    let score = 0;
+    let gameActive = false;
+    let wolfX = window.innerWidth / 2;
+    let moveDirection = 0;
+    const wolfSpeed = 7;
+    let eggTimer;
+
+    // Сохранение рекорда
+    document.getElementById('best').innerText = localStorage.getItem('wolfBest') || 0;
+
+    function startGame() {
+        menu.style.display = 'none';
+        score = 0;
+        scoreElement.innerText = '0';
+        gameActive = true;
+        spawnLoop();
+    }
+
+    function spawnLoop() {
+        if (!gameActive) return;
+        createEgg();
+        // Увеличиваем сложность (уменьшаем интервал)
+        let delay = Math.max(600, 1300 - (score * 10));
+        eggTimer = setTimeout(spawnLoop, delay);
+    }
+
+    // Плавное движение
+    function updateMovement() {
+        if (moveDirection !== 0 && gameActive) {
+            wolfX += moveDirection * wolfSpeed;
+            const limit = 40;
+            if (wolfX < limit) wolfX = limit;
+            if (wolfX > window.innerWidth - limit) wolfX = window.innerWidth - limit;
+            wolf.style.left = wolfX + 'px';
+            wolf.style.transform = `translateX(-50%) scaleX(${moveDirection === 1 ? -1 : 1})`;
+        }
+        requestAnimationFrame(updateMovement);
+    }
+    updateMovement();
+
+    // Кнопки
+    const setupBtn = (id, dir) => {
+        const btn = document.getElementById(id);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveDirection = dir; });
+        btn.addEventListener('touchend', () => moveDirection = 0);
+        btn.addEventListener('mousedown', () => moveDirection = dir);
+        btn.addEventListener('mouseup', () => moveDirection = 0);
+    };
+    setupBtn('left-btn', -1);
+    setupBtn('right-btn', 1);
+
+    function createEgg() {
+        const egg = document.createElement('img');
+        egg.src = 'egg.png';
+        egg.className = 'egg';
+        const startX = Math.random() * (window.innerWidth - 60) + 30;
+        egg.style.left = startX + 'px';
+        egg.style.top = '-50px';
+        container.appendChild(egg);
+
+        let posY = -50;
+        let fallSpeed = 3 + (score / 15);
+
+        const fall = setInterval(() => {
+            if (!gameActive) { clearInterval(fall); egg.remove(); return; }
+            posY += fallSpeed;
+            egg.style.top = posY + 'px';
+            egg.style.transform = `rotate(${posY * 2}deg)`;
+
+            const wRect = wolf.getBoundingClientRect();
+            const eRect = egg.getBoundingClientRect();
+
+            if (eRect.bottom >= wRect.top + 10 && eRect.left < wRect.right && eRect.right > wRect.left && eRect.top < wRect.bottom) {
+                score++;
+                scoreElement.innerText = score;
+                egg.remove();
+                clearInterval(fall);
+            }
+
+            if (posY > container.offsetHeight) {
+                gameOver();
+                egg.remove();
+                clearInterval(fall);
+            }
+        }, 16);
+    }
+
+    function gameOver() {
+        gameActive = false;
+        clearTimeout(eggTimer);
+        const best = localStorage.getItem('wolfBest') || 0;
+        if (score > best) localStorage.setItem('wolfBest', score);
+        document.getElementById('best').innerText = localStorage.getItem('wolfBest');
+
+        alert("Игра окончена! Счёт: " + score);
+        menu.style.display = 'flex';
+    }
+</script>
+</body>
+</html>
